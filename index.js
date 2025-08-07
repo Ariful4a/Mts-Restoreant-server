@@ -29,14 +29,20 @@ async function run() {
     await client.connect();
 
     const menuCollection = client.db('American_restoreant').collection('menu');
+    const cartCollection = client.db('cartCollection').collection('carts');
 
     app.get('/menu', async(req, res) =>{
         const result= await menuCollection.find().toArray();
         res.send(result);
     })
 
+    // Add to cart
 
-
+    app.post('/carts', async (req, res)=>{
+      const cartItem = req.body;
+      const result = await cartCollection.insertOne(cartItem);
+      res.send(result);
+    })
 
 
 
