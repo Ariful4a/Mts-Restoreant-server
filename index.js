@@ -30,6 +30,15 @@ async function run() {
 
     const menuCollection = client.db('American_restoreant').collection('menu');
     const cartCollection = client.db('cartCollection').collection('carts');
+    const usersCollection = client.db('cartCollection').collection('users');
+
+
+    // All users data 
+    app.post('/users', async (req, res) =>{
+      const user = req.body;
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    })
 
     app.get('/menu', async(req, res) =>{
         const result= await menuCollection.find().toArray();
