@@ -29,14 +29,20 @@ async function run() {
     await client.connect();
 
     const menuCollection = client.db('American_restoreant').collection('menu');
-    const cartCollection = client.db('cartCollection').collection('carts');
-    const usersCollection = client.db('cartCollection').collection('users');
+    const cartCollection = client.db('American_restoreant').collection('carts');
+    const userCollection = client.db('American_restoreant').collection('users');
 
 
     // All users data 
     app.post('/users', async (req, res) =>{
       const user = req.body;
-      const result = await usersCollection.insertOne(user);
+      // Existing user data not send again database 
+      const query = {email: user.email}
+      const existingUser = await userCollection.findOne(query);
+      if(existingUser){
+        return res.send({message: 'User already exists', insertedId: null})
+      }
+      const result = await userCollection.insertOne(user);
       res.send(result);
     })
 
