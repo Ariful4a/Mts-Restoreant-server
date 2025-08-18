@@ -32,6 +32,11 @@ async function run() {
     const cartCollection = client.db('American_restoreant').collection('carts');
     const userCollection = client.db('American_restoreant').collection('users');
 
+    // user data load 
+    app.get('/users', async (req, res) =>{
+      const result = await userCollection.find().toArray();
+      res.send(result);
+    })
 
     // All users data 
     app.post('/users', async (req, res) =>{
