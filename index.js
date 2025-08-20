@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 require('dotenv').config()
 const port = process.env.PORT || 5000;
 
@@ -32,8 +33,32 @@ async function run() {
     const cartCollection = client.db('American_restoreant').collection('carts');
     const userCollection = client.db('American_restoreant').collection('users');
 
+
+  // jwt releted api 
+  app.post('/jwt', (req, res) =>{
+    const user = req.body;
+    const token = jwt.sign(user, process.env.API_SECRET, { expiresIn: '1h' });
+    res.send({ token });
+  })
+
+// Middlewares 
+const verifyToken = (req, res, next) => {
+     console.log('insdie verify token',req.headers.authorization);
+     if(!req.headers.authorization){
+       return res.status(401).send({ message: 'Unauthorized access' });
+     }
+      const token = req.headers.authorization.split(' ')[1];
+      jwt.verify(token, process.env.API_SECRET, (err, decoded) => {
+        if (err) {
+          return res.status(401).send({ message: 'Forbidden access' });
+        }
+        req.decoded = decoded;
+        next();
+      });
+}
+
     // user data load 
-    app.get('/users', async (req, res) =>{
+    app.get('/users', verifyToken, async (req, res) =>{
       const result = await userCollection.find().toArray();
       res.send(result);
     })
@@ -50,6 +75,21 @@ async function run() {
       const result = await userCollection.insertOne(user);
       res.send(result);
     })
+
+
+    app.patch('/users/admin/:id', async (req, res) =>{
+      const id = req.params.id;
+      const user = req.body;
+      const filter = {_id: new ObjectId(id)}
+      const updateDoc = {
+        $set: {
+          role: 'admin'
+        }
+      }
+      const result = await userCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    })
+
 
     // user delete 
     app.delete('/users/:id', async (req, res) =>{
