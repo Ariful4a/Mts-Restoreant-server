@@ -63,7 +63,7 @@ const verifyToken = (req, res, next) => {
       res.send(result);
     })
 
-    // All users data 
+    // All users data post
     app.post('/users', async (req, res) =>{
       const user = req.body;
       // Existing user data not send again database 
@@ -74,6 +74,23 @@ const verifyToken = (req, res, next) => {
       }
       const result = await userCollection.insertOne(user);
       res.send(result);
+    })
+
+
+    // Admin check 
+
+    app.get('/user/admin/:admin', verifyToken, async (req, res) =>{
+      const email = req.params.email;
+      if(email !== req.decoded.email){
+        return res.status(403).send({message: 'Unauthorized access'})
+      }
+      const query = {email: email};
+      const user = await userCollection.findOne(query);
+      let admin = false;
+      if(user){
+        admin = user?.role === 'admin';
+      }
+      res.send({admin});
     })
 
 
