@@ -130,13 +130,28 @@ const verifyAdmin = async (req, res, next) => {
       const query = {_id: new ObjectId(id)}
       const result = await userCollection.deleteOne(query);
       res.send(result);
-    })
+    });
 
     // menu releted api 
     app.get('/menu', async(req, res) =>{
         const result= await menuCollection.find().toArray();
         res.send(result);
-    })
+    });
+
+    // menu item post
+    app.post('/menu', verifyToken, verifyAdmin, async (req, res) =>{
+        const menuItem = req.body;
+        const result = await menuCollection.insertOne(menuItem);
+        res.send(result);
+    });
+
+    // menu item delete
+    app.delete('/menu/:id', verifyToken, verifyAdmin, async (req, res) =>{
+        const id = req.params.id;
+        const query = {_id: new ObjectId(id)}
+        const result = await menuCollection.deleteOne(query);
+        res.send(result);
+    });
 
     // Add to cart
 
