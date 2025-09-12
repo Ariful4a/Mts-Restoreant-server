@@ -2,7 +2,8 @@ const express = require("express");
 const app = express();
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-require('dotenv').config()
+require('dotenv').config();
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 const port = process.env.PORT || 5000;
 
 
@@ -32,6 +33,8 @@ async function run() {
     const menuCollection = client.db('American_restoreant').collection('menu');
     const cartCollection = client.db('American_restoreant').collection('carts');
     const userCollection = client.db('American_restoreant').collection('users');
+    const paymentCollection = client.db('American_restoreant').collection('payments');
+
 
 
   // jwt releted api 
@@ -205,6 +208,36 @@ const verifyAdmin = async (req, res, next) => {
       const query = { _id: new ObjectId(id)};
       const result = await cartCollection.deleteOne(query);
       res.send(result);
+    });
+
+    // Payment intent 
+    app.post('/create-payment-intent', async (req, res) =>{
+      const { price } = req.body;
+      const amount = parseInt(price * 100);
+      console.log(amount, 'hi ')
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: 'usd',
+        payment_method_types: ['card']
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret 
+      })
+    })
+
+    app.post('/payments', async (req, res) =>{
+      const payment = req.body;
+      const paymentResult = await paymentCollection.insertOne(payment);
+      console.log(payment, 'Payment info')
+      // carefully delete each item from the cart 
+      const query = { _id: {
+        $in: payment.cartIds.map(id => new ObjectId(id))
+      }}
+
+
+      const deleteResult = await cartCollection.deleteMany(query);
+
+       res.send(paymentResult, deleteResult);
     })
 
     // Send a ping to confirm a successful connection
